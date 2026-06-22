@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Predictor de Alcohol — Vino Blanco</title>
+  <style>
+    /* ── Reset & base ──────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold:       #c9a84c;
+      --gold-light: #e8c97a;
+      --gold-dark:  #9a7b2f;
+      --bg:         #0d0d0d;
+      --bg-card:    #161616;
+      --bg-input:   #1e1e1e;
+      --border:     #2e2e2e;
+      --text:       #f0ece4;
+      --text-muted: #888;
+      --success:    #4caf7d;
+      --error:      #e05c5c;
+      --radius:     12px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── Header ────────────────────────────────────────────────────────────── */
+    header {
+      width: 100%;
+      background: linear-gradient(135deg, #0d0d0d 0%, #1a140a 100%);
+      border-bottom: 1px solid #2a2010;
+      padding: 2rem 1.5rem 1.5rem;
+      text-align: center;
+    }
+
+    .header-icon {
+      font-size: 3rem;
+      display: block;
+      margin-bottom: 0.5rem;
+      filter: drop-shadow(0 0 18px #c9a84c88);
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      letter-spacing: 0.5px;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 0.4rem;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-top: 0.8rem;
+      background: #1e1a10;
+      border: 1px solid #3a2f14;
+      color: var(--gold);
+      font-size: 0.75rem;
+      padding: 0.25rem 0.8rem;
+      border-radius: 999px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Main container ────────────────────────────────────────────────────── */
+    main {
+      width: 100%;
+      max-width: 780px;
+      padding: 2rem 1.5rem 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* ── Info banner ───────────────────────────────────────────────────────── */
+    .info-banner {
+      background: #1a1a0f;
+      border: 1px solid #2e2a18;
+      border-left: 3px solid var(--gold);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      font-size: 0.85rem;
+      color: #bbb8ae;
+      line-height: 1.6;
+    }
+
+    .info-banner strong { color: var(--gold-light); }
+
+    /* ── Card ──────────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+    }
+
+    .card-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Grid de inputs ────────────────────────────────────────────────────── */
+    .fields-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .field label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .field label span {
+      color: #555;
+      font-size: 0.75rem;
+      margin-left: 4px;
+    }
+
+    .field input, .field select {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.95rem;
+      padding: 0.6rem 0.85rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .field input:focus, .field select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px #c9a84c22;
+    }
+
+    .field .hint {
+      font-size: 0.72rem;
+      color: #555;
+    }
+
+    /* Quality selector especial */
+    .quality-row {
+      grid-column: 1 / -1;
+    }
+
+    .quality-options {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .quality-options input[type="radio"] { display: none; }
+
+    .quality-options label {
+      cursor: pointer;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.45rem 0.85rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: all 0.15s;
+      min-width: 2.8rem;
+      text-align: center;
+    }
+
+    .quality-options input[type="radio"]:checked + label {
+      background: #1e1a10;
+      border-color: var(--gold);
+      color: var(--gold-light);
+      box-shadow: 0 0 0 2px #c9a84c33;
+    }
+
+    .quality-options label:hover {
+      border-color: #555;
+      color: var(--text);
+    }
+
+    /* ── Botón ─────────────────────────────────────────────────────────────── */
+    .btn-predict {
+      width: 100%;
+      padding: 0.85rem;
+      margin-top: 1.25rem;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      color: #0d0d0d;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn-predict:hover  { opacity: 0.9; }
+    .btn-predict:active { transform: scale(0.98); }
+
+    /* ── Resultado ─────────────────────────────────────────────────────────── */
+    .result-card {
+      background: linear-gradient(135deg, #0f180d, #0d1a14);
+      border: 1px solid #2a4030;
+      border-left: 3px solid var(--success);
+      border-radius: var(--radius);
+      padding: 1.5rem 1.75rem;
+      text-align: center;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .result-label {
+      font-size: 0.72rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--success);
+      margin-bottom: 0.5rem;
+    }
+
+    .result-value {
+      font-size: 3.2rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .result-value span {
+      font-size: 1.2rem;
+      font-weight: 400;
+      color: #8fc8a8;
+      margin-left: 0.3rem;
+    }
+
+    .result-sub {
+      margin-top: 0.6rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Error ─────────────────────────────────────────────────────────────── */
+    .error-card {
+      background: #1a0f0f;
+      border: 1px solid #3a2020;
+      border-left: 3px solid var(--error);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      font-size: 0.85rem;
+      color: #e08888;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .error-card strong { color: var(--error); display: block; margin-bottom: 0.25rem; }
+
+    /* ── Referencia de rangos ──────────────────────────────────────────────── */
+    .ranges-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .range-item {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 0.85rem;
+    }
+
+    .range-item .name  { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.2rem; }
+    .range-item .range { font-size: 0.82rem; color: var(--gold-light); font-weight: 600; }
+    .range-item .unit  { font-size: 0.7rem;  color: #555; }
+
+    /* ── Footer ────────────────────────────────────────────────────────────── */
+    footer {
+      width: 100%;
+      border-top: 1px solid var(--border);
+      padding: 1.25rem;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #444;
+    }
+
+    footer strong { color: #666; }
+
+    /* ── Animación ─────────────────────────────────────────────────────────── */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ────────────────────────────────────────────────────────── */
+    @media (max-width: 520px) {
+      .fields-grid { grid-template-columns: 1fr; }
+      .result-value { font-size: 2.4rem; }
+      header h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ──────────────────────────────────────────────────────────────── -->
+<header>
+  <span class="header-icon">🍷</span>
+  <h1>Predictor de Contenido de Alcohol</h1>
+  <p>White Wine Quality Dataset — Modelo MLP con características seleccionadas</p>
+  <span class="badge">Proyecto Mes 2 · CRISP-DM · UTHH 2025</span>
+</header>
+
+<!-- ── MAIN ────────────────────────────────────────────────────────────────── -->
+<main>
+
+  <!-- Banner informativo -->
+  <div class="info-banner">
+    Ingresa las <strong>propiedades fisicoquímicas</strong> de una muestra de vino blanco
+    y el modelo predecirá su <strong>contenido de alcohol (% ABV)</strong>.
+    El pipeline aplica internamente la imputación y el escalado — solo ingresa valores originales.
+  </div>
+
+  <!-- Resultado (si existe) -->
+  {% if prediccion %}
+  <div class="result-card">
+    <div class="result-label">✓ Alcohol predicho</div>
+    <div class="result-value">{{ prediccion }}<span>% ABV</span></div>
+    <div class="result-sub">Modelo: MLPRegressor · R² medio = 0.876 · MAE medio = 0.314 % ABV</div>
+  </div>
+  {% endif %}
+
+  <!-- Error (si existe) -->
+  {% if error %}
+  <div class="error-card">
+    <strong>⚠ Error de validación</strong>
+    {{ error }}
+  </div>
+  {% endif %}
+
+  <!-- Formulario -->
+  <div class="card">
+    <div class="card-title">📋 Datos de entrada</div>
+
+    <form action="/predict" method="POST">
+
+      <div class="fields-grid">
+
+        <!-- Density -->
+        <div class="field">
+          <label>Densidad <span>(g/mL)</span></label>
+          <input type="number" name="density" step="0.0001" min="0.987" max="1.039"
+                 placeholder="ej. 0.994"
+                 value="{{ valores.density if valores else '' }}" required />
+          <span class="hint">Rango típico: 0.987 – 1.039</span>
+        </div>
+
+        <!-- Residual sugar -->
+        <div class="field">
+          <label>Azúcar residual <span>(g/L)</span></label>
+          <input type="number" name="residual_sugar" step="0.1" min="0.6" max="65.8"
+                 placeholder="ej. 5.0"
+                 value="{{ valores.residual_sugar if valores else '' }}" required />
+          <span class="hint">Rango típico: 0.6 – 65.8</span>
+        </div>
+
+        <!-- Fixed acidity -->
+        <div class="field">
+          <label>Acidez fija <span>(g/L)</span></label>
+          <input type="number" name="fixed_acidity" step="0.1" min="3.8" max="14.2"
+                 placeholder="ej. 6.8"
+                 value="{{ valores.fixed_acidity if valores else '' }}" required />
+          <span class="hint">Rango típico: 3.8 – 14.2</span>
+        </div>
+
+        <!-- pH -->
+        <div class="field">
+          <label>pH</label>
+          <input type="number" name="ph" step="0.01" min="2.72" max="3.82"
+                 placeholder="ej. 3.18"
+                 value="{{ valores.ph if valores else '' }}" required />
+          <span class="hint">Rango típico: 2.72 – 3.82</span>
+        </div>
+
+        <!-- Quality (radio buttons) -->
+        <div class="field quality-row">
+          <label>Calidad organoléptica <span>(puntuación expertos 3–9)</span></label>
+          <div class="quality-options">
+            {% for q in [3,4,5,6,7,8,9] %}
+            <input type="radio" name="quality" id="q{{ q }}" value="{{ q }}"
+                   {{ 'checked' if valores and valores.quality == q|string else ('checked' if q == 6 and not valores else '') }} />
+            <label for="q{{ q }}">{{ q }}</label>
+            {% endfor %}
+          </div>
+          <span class="hint">3 = muy bajo · 6 = normal · 9 = excelente</span>
+        </div>
+
+      </div><!-- /fields-grid -->
+
+      <button type="submit" class="btn-predict">🔬 Predecir contenido de alcohol</button>
+
+    </form>
+  </div>
+
+  <!-- Referencia de rangos -->
+  <div class="card">
+    <div class="card-title">📊 Rangos de referencia del dataset</div>
+    <div class="ranges-grid">
+      <div class="range-item">
+        <div class="name">Densidad</div>
+        <div class="range">0.987 – 1.039</div>
+        <div class="unit">g/mL</div>
+      </div>
+      <div class="range-item">
+        <div class="name">Azúcar residual</div>
+        <div class="range">0.6 – 65.8</div>
+        <div class="unit">g/L</div>
+      </div>
+      <div class="range-item">
+        <div class="name">Acidez fija</div>
+        <div class="range">3.8 – 14.2</div>
+        <div class="unit">g/L</div>
+      </div>
+      <div class="range-item">
+        <div class="name">pH</div>
+        <div class="range">2.72 – 3.82</div>
+        <div class="unit">—</div>
+      </div>
+      <div class="range-item">
+        <div class="name">Calidad</div>
+        <div class="range">3 – 9</div>
+        <div class="unit">puntos</div>
+      </div>
+      <div class="range-item">
+        <div class="name">Alcohol (objetivo)</div>
+        <div class="range">8.0 – 14.2</div>
+        <div class="unit">% ABV</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── FOOTER ───────────────────────────────────────────────────────────────── -->
+<footer>
+  <strong>Angel Uriel Martínez Hernández · 20230020 · Grupo B</strong><br/>
+  Extracción de Conocimiento en BD · Dr. Efrén Juárez Castillo · UTHH 2025
+</footer>
+
+</body>
+</html>
